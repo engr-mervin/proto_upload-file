@@ -2,7 +2,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { NextResponse } from "next/server";
 import { join } from "node:path";
 import { stat, mkdir, writeFile } from "node:fs/promises";
-import * as dateFn from "date-fns";
 import mime from "mime";
 
 type NextApiRequestWithFormData = NextApiRequest &

@@ -14,6 +14,7 @@ const Home = function () {
       return;
     }
     const selectedImg = e.target.files[0];
+
     if (!selectedImg.type.startsWith("image")) {
       setErr("File is not an image");
       return;
@@ -32,11 +33,14 @@ const Home = function () {
     const body = new FormData();
     body.append("myImage", img);
 
-    console.log(body, img);
     const response = await fetch("/api/file", {
       method: "POST",
       body,
     });
+
+    const data = await response.json();
+
+    console.log(data);
   };
 
   return (
