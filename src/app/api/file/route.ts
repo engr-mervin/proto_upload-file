@@ -79,24 +79,43 @@ export async function POST(req: NextApiRequestWithFormData) {
     };
 
     data.files.push(newFileData);
-    writeFile(
-      join(process.cwd(), "public", "data.json"),
-      JSON.stringify(data),
-      (err) => {
-        if (err) {
-          return NextResponse.json({
-            status: 500,
-            message: "Something went wrong while writing data.",
-            error: err,
-          });
-        } else {
-          return NextResponse.json({
-            status: 201,
-            fileUrl: `${relativeUploadDir}/${filename}`,
-          });
+    // writeFile(
+    //   join(process.cwd(), "public", "data.json"),
+    //   JSON.stringify(data),
+    //   (err) => {
+    //     if (err) {
+    //       return NextResponse.json({
+    //         status: 500,
+    //         message: "Something went wrong while writing data.",
+    //         error: err,
+    //       });
+    //     } else {
+    //       return NextResponse.json({
+    //         status: 201,
+    //         fileUrl: `${relativeUploadDir}/${filename}`,
+    //       });
+    //     }
+    //   }
+    // );
+
+    await new Promise<void>((resolve, reject) => {
+      writeFile(
+        join(process.cwd(), "public", "data.json"),
+        JSON.stringify(data),
+        (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve();
+          }
         }
-      }
-    );
+      );
+    });
+
+    return NextResponse.json({
+      status: 201,
+      fileUrl: `${relativeUploadDir}/${filename}`,
+    });
   } catch (e) {
     console.error("Error while trying to upload a file\n", e);
     return NextResponse.json(
