@@ -1,5 +1,5 @@
 import { NextApiRequest } from "next";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { join } from "node:path";
 import { stat, mkdir } from "node:fs/promises";
 import mime from "mime";
@@ -109,7 +109,7 @@ export async function POST(req: NextApiRequestWithFormData) {
   }
 }
 
-export async function GET(req: NextApiRequest) {
+export async function GET() {
   let result = {};
   try {
     await new Promise<any>((resolve, reject) => {
