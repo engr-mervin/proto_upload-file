@@ -10,6 +10,7 @@
     "sass": "sass -w styles/main.scss:src/app/globals.css"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.33.1",
     "@types/formidable": "^3.4.2",
     "@types/node": "20.5.9",
     "@types/node-fetch": "^2.6.4",

@@ -1,22 +1,25 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextApiRequest } from "next";
 import { NextResponse } from "next/server";
 import { join } from "node:path";
-import { stat, mkdir, writeFile } from "node:fs/promises";
+import { stat, mkdir } from "node:fs/promises";
 import mime from "mime";
+import { createWriteStream, readFileSync, writeFile } from "node:fs";
+// import { createClient } from "@supabase/supabase-js";
 
 type NextApiRequestWithFormData = NextApiRequest &
   Request & {
     files: any[];
   };
 
-type NextApiResponseCustom = NextApiResponse & Response;
+let data = JSON.parse(
+  readFileSync(join(process.cwd(), "public", "data.json"), "utf-8")
+);
 
-export async function POST(
-  req: NextApiRequestWithFormData,
-  res: NextApiResponseCustom
-) {
+export async function POST(req: NextApiRequestWithFormData) {
   const formData = await req.formData();
-  const image = formData.get("myImage") as Blob | null;
+  const image = formData.get("myImage") as File;
+  const description = formData.get("myDescription") as string;
+  console.log(req);
 
   if (!image)
     return NextResponse.json(
@@ -24,8 +27,7 @@ export async function POST(
       { status: 400 }
     );
 
-  const buffer = Buffer.from(await image.arrayBuffer());
-  const relativeUploadDir = `/uploads`;
+  const relativeUploadDir = `uploads`;
   const uploadDir = join(process.cwd(), "public", relativeUploadDir);
 
   try {
@@ -51,8 +53,50 @@ export async function POST(
       /\.[^/.]+$/,
       ""
     )}-${uniqueSuffix}.${mime.getExtension(image.type)}`;
-    await writeFile(`${uploadDir}/${filename}`, buffer);
-    return NextResponse.json({ fileUrl: `${relativeUploadDir}/${filename}` });
+
+    const fileStream = createWriteStream(`${uploadDir}/${filename}`);
+    const buffer = Buffer.from(await image.arrayBuffer());
+    fileStream.write(buffer);
+    fileStream.end();
+
+    console.log("Started stream");
+    await new Promise<void>((resolve, reject) => {
+      fileStream.on("close", () => {
+        console.log("Stream finished");
+        resolve();
+      });
+      fileStream.on("error", (err) => {
+        console.log("Stream error");
+        reject(err);
+      });
+    });
+
+    console.log("Finished stream");
+
+    const newFileData = {
+      description: description,
+      file_url: `${relativeUploadDir}/${filename}`,
+    };
+
+    data.files.push(newFileData);
+    writeFile(
+      join(process.cwd(), "public", "data.json"),
+      JSON.stringify(data),
+      (err) => {
+        if (err) {
+          return NextResponse.json({
+            status: 500,
+            message: "Something went wrong while writing data.",
+            error: err,
+          });
+        } else {
+          return NextResponse.json({
+            status: 201,
+            fileUrl: `${relativeUploadDir}/${filename}`,
+          });
+        }
+      }
+    );
   } catch (e) {
     console.error("Error while trying to upload a file\n", e);
     return NextResponse.json(

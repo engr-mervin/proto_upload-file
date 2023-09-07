@@ -6,6 +6,7 @@ const Home = function () {
   const [img, setImg] = useState<any>(null);
   const [err, setErr] = useState<string>("");
   const [imgURL, setImgURL] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
 
   const selectFile = function (e: React.ChangeEvent<HTMLInputElement>): void {
     e.preventDefault();
@@ -16,7 +17,7 @@ const Home = function () {
     const selectedImg = e.target.files[0];
 
     if (!selectedImg.type.startsWith("image")) {
-      setErr("File is not an image");
+      setErr("File is not an image.");
       return;
     }
 
@@ -32,15 +33,14 @@ const Home = function () {
     if (!img) return;
     const body = new FormData();
     body.append("myImage", img);
+    body.append("myDescription", description);
 
     const response = await fetch("/api/file", {
       method: "POST",
       body,
     });
 
-    const data = await response.json();
-
-    console.log(data);
+    console.log(response);
   };
 
   return (
@@ -66,7 +66,12 @@ const Home = function () {
           <label className="label--description" htmlFor="input--description">
             Description:
           </label>
-          <input id="input--description" type="text" />
+          <input
+            id="input--description"
+            name="myDescription"
+            type="text"
+            onChange={(e) => setDescription(e.target.value)}
+          />
         </div>
         <button type="submit" className="button--submit">
           Send
