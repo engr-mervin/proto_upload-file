@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { join } from "node:path";
 import { stat, mkdir } from "node:fs/promises";
 import mime from "mime";
-import { createWriteStream, readFileSync, writeFile } from "node:fs";
+import { createWriteStream, readFile, readFileSync, writeFile } from "node:fs";
 // import { createClient } from "@supabase/supabase-js";
 
 type NextApiRequestWithFormData = NextApiRequest &
@@ -49,10 +49,12 @@ export async function POST(req: NextApiRequestWithFormData) {
 
   try {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const filename = `${image.name.replace(
+    let filename = `${image.name.replace(
       /\.[^/.]+$/,
       ""
     )}-${uniqueSuffix}.${mime.getExtension(image.type)}`;
+
+    filename = filename.replace(" ", "");
 
     const fileStream = createWriteStream(`${uploadDir}/${filename}`);
     const buffer = Buffer.from(await image.arrayBuffer());
@@ -79,24 +81,6 @@ export async function POST(req: NextApiRequestWithFormData) {
     };
 
     data.files.push(newFileData);
-    // writeFile(
-    //   join(process.cwd(), "public", "data.json"),
-    //   JSON.stringify(data),
-    //   (err) => {
-    //     if (err) {
-    //       return NextResponse.json({
-    //         status: 500,
-    //         message: "Something went wrong while writing data.",
-    //         error: err,
-    //       });
-    //     } else {
-    //       return NextResponse.json({
-    //         status: 201,
-    //         fileUrl: `${relativeUploadDir}/${filename}`,
-    //       });
-    //     }
-    //   }
-    // );
 
     await new Promise<void>((resolve, reject) => {
       writeFile(
@@ -122,5 +106,28 @@ export async function POST(req: NextApiRequestWithFormData) {
       { error: "Something went wrong." },
       { status: 500 }
     );
+  }
+}
+
+export async function GET(req: NextApiRequest) {
+  let result = {};
+  try {
+    await new Promise<any>((resolve, reject) => {
+      readFile("public/data.json", "utf-8", (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          result = JSON.parse(data).files;
+          resolve(result);
+        }
+      });
+    });
+
+    return NextResponse.json({ message: "ok", status: 200, files: result });
+  } catch (err) {
+    return NextResponse.json({
+      message: "Something went wrong in getting files",
+      status: 500,
+    });
   }
 }

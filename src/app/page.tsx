@@ -1,12 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+type File = {
+  description: string;
+  file_url: string;
+};
 const Home = function () {
   const [img, setImg] = useState<any>(null);
+  const [files, setFiles] = useState<File[] | null>(null);
   const [err, setErr] = useState<string>("");
   const [imgURL, setImgURL] = useState<string>("");
   const [description, setDescription] = useState<string>("");
+  console.log(files);
+
+  //FETCH DATA
+  useEffect(() => {
+    fetch("/api/file")
+      .then((response) => {
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        setFiles(data.files);
+      });
+  }, []);
 
   const selectFile = function (e: React.ChangeEvent<HTMLInputElement>): void {
     e.preventDefault();
@@ -80,6 +98,16 @@ const Home = function () {
       </form>
       {imgURL ? <img src={imgURL}></img> : ""}
       <p>{err}</p>
+      <ul>
+        {files
+          ? files.map((el: File) => (
+              <li key={el.file_url}>
+                <p>{el.description}</p>
+                <img src={el.file_url}></img>
+              </li>
+            ))
+          : ""}
+      </ul>
     </>
   );
 };
